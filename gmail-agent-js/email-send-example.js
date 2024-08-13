@@ -6,6 +6,7 @@ import { ChatMistralAI } from "@langchain/mistralai";
 
 dotenv.config();
 
+// Initialize the toolset
 const toolset = new LangchainToolSet({ apiKey: process.env.COMPOSIO_API_KEY });
 
 // Create Gmail integration with Composio
@@ -25,10 +26,11 @@ async function setupUserConnection(entityId) {
 
 async function executeAgent(entityName) {
 
-  // Create entity and get tools
+  // Create entity and set up user connection
   const entity = await toolset.client.getEntity(entityName);
   const a = await setupUserConnection(entity.id);
 
+  // Get the desired actions
   const tools = await toolset.getActions(
     {
       actions: [
@@ -41,12 +43,13 @@ async function executeAgent(entityName) {
     entity.id
   );
 
-
+// Initialize the LLM
   const llm = new ChatMistralAI({
     model: "mistral-large-latest",
     apiKey: process.env.MISTRAL_API_KEY,
   });
 
+// Create custom prompt
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
@@ -56,14 +59,17 @@ async function executeAgent(entityName) {
     ["placeholder", "{agent_scratchpad}"],
   ]);
 
+  // Create the agent
   const agent = await createToolCallingAgent({
     llm,
     tools: tools,
     prompt,
   });
 
+  // Execute the agent
   const agentExecutor = new AgentExecutor({ agent, tools, verbose: true });
   const result = await agentExecutor.invoke({
+    // Customize the input -
     input: "Send a mail to example@gmail.com saying Hello",
   });
 
