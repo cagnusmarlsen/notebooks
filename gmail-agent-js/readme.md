@@ -26,7 +26,7 @@ Get a Composio API key.
 
 ### Run an example - 
 
-To run `email-send-example.js`, which allows the agent to send emails based on user input, run -
+To run `email-send-example.js`, which allows the agent to send, fetch and draft emails based on user input, run -
 
 ```
 npm run start
