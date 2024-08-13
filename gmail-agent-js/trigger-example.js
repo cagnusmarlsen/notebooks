@@ -9,6 +9,7 @@ dotenv.config();
 // Initialize the toolset
 const toolset = new LangchainToolSet({ apiKey: process.env.COMPOSIO_API_KEY });
 
+// Get the user
 const userEntity = await toolset.client.getEntity("default");
 
 // Set up the trigger for new emails
@@ -50,7 +51,7 @@ async function executeAgent(entityName, { from, message, id }) {
       ["placeholder", "{agent_scratchpad}"],
     ]);
 
-    // Step 4: Create an instance of ChatMistalAI
+    // Step 4: Create an instance of ChatMistralAI
     const llm = new ChatMistralAI({
       model: "mistral-large-latest",
       apiKey: process.env.MISTRAL_API_KEY,
