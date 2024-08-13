@@ -1,10 +1,14 @@
-const { AgentExecutor, createToolCallingAgent } = require("langchain/agents");
-const { LangchainToolSet } = require("composio-core");
-const { ChatPromptTemplate } = require("@langchain/core/prompts");
-const { ChatMistralAI } = require("@langchain/mistralai");
+import dotenv from "dotenv";
+import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
+import { LangchainToolSet } from "composio-core";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { ChatMistralAI } from "@langchain/mistralai";
+
+dotenv.config();
 
 const toolset = new LangchainToolSet({ apiKey: process.env.COMPOSIO_API_KEY });
 
+// Create Gmail integration with Composio
 async function setupUserConnection(entityId) {
   const entity = toolset.client.getEntity(entityId);
   const connection = await entity.getConnection("gmail");
@@ -13,17 +17,18 @@ async function setupUserConnection(entityId) {
     // If this entity/user hasn't already connected the account
     const connection = await entity.initiateConnection("gmail");
     console.log("Log in via: ", connection.redirectUrl);
+
     return connection.waitUntilActive(100);
   }
-
   return connection;
 }
 
 async function executeAgent(entityName) {
-  // Create entity and get tools
 
+  // Create entity and get tools
   const entity = await toolset.client.getEntity(entityName);
-  await setupUserConnection(entity.id);
+  const a = await setupUserConnection(entity.id);
+
   const tools = await toolset.getActions(
     {
       actions: [
@@ -36,6 +41,7 @@ async function executeAgent(entityName) {
     entity.id
   );
 
+
   const llm = new ChatMistralAI({
     model: "mistral-large-latest",
     apiKey: process.env.MISTRAL_API_KEY,
@@ -44,7 +50,7 @@ async function executeAgent(entityName) {
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      "You are an AI email assistant that can write, fetch, and manage emails and labels. Follow the user’s instructions carefully and perform the requested actions. If fetching emails, print the Subject and Mail content in a readable format.",
+      "You are a helpful and thorough AI email assistant who can write and fetch emails, create draft mails and also create new gmail labels. Your goal is to understand the guidelines provided by the user and perform the specific actions requested by the user. If the user asks to fetch emails, use the actual data from the API response and print the result including these terms: Subject and Mail in an easy-to-read format.",
     ],
     ["human", "{input}"],
     ["placeholder", "{agent_scratchpad}"],
@@ -58,10 +64,9 @@ async function executeAgent(entityName) {
 
   const agentExecutor = new AgentExecutor({ agent, tools, verbose: true });
   const result = await agentExecutor.invoke({
-    input: "Send a mail to example@gmail.com saying hi",
+    input: "Send a mail to example@gmail.com saying Hello",
   });
 
   console.log(result.output);
 }
-
-executeAgent("arunabh");
+executeAgent("default");
